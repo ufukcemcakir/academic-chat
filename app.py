@@ -98,7 +98,17 @@ Answer concisely based only on the context above.
 
 # --- STREAMLIT UI ---
 
+st.set_page_config(page_title="Ask Your Paper", layout="wide")
+
 st.title("📄 Ask Your Paper")
+st.markdown("""
+Upload a research paper and ask any question about its content.  
+Answers are generated using a Retrieval-Augmented Generation (RAG) system powered by 🤗 Hugging Face.
+
+🧠 Embeddings: MiniLM  
+💬 LLM: Qwen 1.7B (via Hugging Face)
+""")
+
 
 uploaded_pdf = st.file_uploader("Upload a research paper (PDF)", type="pdf")
 
@@ -111,7 +121,7 @@ if uploaded_pdf:
     st.success(f"Processed {len(chunks)} chunks.")
 
     st.write("You can now ask a question about the paper:")
-    question = st.text_input("Ask your question")
+    question = st.chat_input("Ask your question")
 
     if question:
         with st.spinner("Thinking..."):
