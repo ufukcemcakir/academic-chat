@@ -5,3 +5,4 @@ langchain
 faiss-cpu
 requests
 python-dotenv
+langchain-text-splitters
