@@ -117,7 +117,7 @@ if uploaded_pdf:
         with st.spinner("Thinking..."):
             retrieved = search(question, index, chunks)
             prompt = build_prompt(question, retrieved)
-            answer = query_llm(prompt)
+            answer = query_hf_llm(prompt)
 
         st.markdown("### 💬 Answer")
         st.write(answer)
