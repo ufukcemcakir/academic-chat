@@ -1,7 +1,6 @@
 import streamlit as st
 import pdfplumber
 from sentence_transformers import SentenceTransformer
-from langchain_text_splitter import RecursiveCharacterTextSplitter
 import faiss
 import numpy as np
 import requests, os
