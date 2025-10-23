@@ -6,7 +6,7 @@ import numpy as np
 import requests, os
 
 # Initialize embedding model
-embedder = SentenceTransformer('all-MiniLM-L6-v2')
+embedder = SentenceTransformer('all-MiniLM-L6-v2',  use_auth_token=False)
 
 def extract_text(file):
     text = ""
