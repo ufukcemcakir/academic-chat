@@ -6,12 +6,44 @@ import faiss
 import numpy as np
 import requests, os
 
-def extract_text_from_pdf(path):
-  text = ""
-  with pdfplumber.open(path) as pdf:
-    for page in pdf.pages:
-      text += page.extract_text() + "\n"
-  return text
+# Initialize embedding model
+embedder = SentenceTransformer('all-MiniLM-L6-v2')
+
+def extract_text(file):
+    text = ""
+    with pdfplumber.open(file) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+    return text
+
+class RecursiveCharacterTextSplitter:
+    def __init__(self, chunk_size=500, chunk_overlap=100, length_function=len):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+        self.length_function = length_function
+    def split_text(self, text):
+        chunks = []
+        start = 0
+        while start < len(text):
+            end = min(start + self.chunk_size, len(text))
+            chunks.append(text[start:end])
+            # advance but keep overlap
+            next_start = end - self.chunk_overlap
+            if next_start <= start:
+                start = end
+            else:
+                start = next_start
+        return chunks
+
+def chunk_text(text):
+  splitter = RecursiveCharacterTextSplitter(
+      chunk_size=500,
+      chunk_overlap=100,
+      length_function=len
+  )
+  return splitter.split_text(text)
 
 def embed_chunks(chunks):
     return embedder.encode(chunks)
@@ -53,19 +85,19 @@ def query_hf_llm(prompt, max_tokens=300):
     return data['choices'][0]['message']['content']
 
 def build_prompt(question, retrieved_chunks):
-  context = "\n\n".join(retrieved_chunks)
-  prompt = f"""
-  You are a helpful assistant that answers questoins about a research paper.
+    context = "\n\n".join(retrieved_chunks)
+    return f"""You are a helpful assistant that answers questions about a research paper.
 
-  Context:
-  {context}
+Context:
+{context}
 
-  Question:
-  {question}
+Question:
+{question}
 
-  Answer concisely based only on the context above.
-  """
-  return prompt
+Answer concisely based only on the context above.
+"""
+
+# --- STREAMLIT UI ---
 
 st.title("📄 Ask Your Paper")
 
