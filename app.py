@@ -4,6 +4,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 import requests, os
+from dotenv import load_dotenv
 
 # Initialize embedding model
 embedder = SentenceTransformer('all-MiniLM-L6-v2',  use_auth_token=False)
@@ -71,14 +72,14 @@ if not HF_TOKEN:
 
 API_URL = 'https://router.huggingface.co/v1/chat/completions'
 
-def query_hf_llm(prompt, max_tokens=300):
+def query_hf_llm(prompt, max_tokens=400):
     headers = {'Authorization': f'Bearer {HF_TOKEN}'}
     payload = {
         'model': 'Qwen/Qwen3-1.7B:featherless-ai',
         'messages': [
             {
                 'role': 'system',
-                'content': 'Disable thinking mode. Do not output <think> blocks. Give a direct, concise answer only based on the context provided.'
+                'content': 'Disable thinking mode. Do not include <think> blocks in your output.'
             },
             {
                 'role': 'user',
@@ -87,9 +88,10 @@ def query_hf_llm(prompt, max_tokens=300):
         ],
         'parameters': {
             'max_new_tokens': max_tokens,
-            'temperature': 0.7,  # recommended for non-thinking mode
+            'temperature': 0.7,
             'top_p': 0.8,
-            'top_k': 20
+            'top_k': 20,
+            'MinP': 0
         }
     }
 
@@ -109,7 +111,7 @@ Context:
 Question:
 {question}
 
-Answer concisely based only on the context above.
+Answer the question based only on the context above.
 """
 
 # --- STREAMLIT UI ---
@@ -129,12 +131,11 @@ Answers are generated using a Retrieval-Augmented Generation (RAG) system powere
 uploaded_pdf = st.file_uploader("Upload a research paper (PDF)", type="pdf")
 
 if uploaded_pdf:
-    st.success("PDF uploaded! Extracting text...")
+    st.success("PDF uploaded!")
     raw_text = extract_text(uploaded_pdf)
     chunks = chunk_text(raw_text)
     embeddings = embed_chunks(chunks)
     index = build_faiss_index(embeddings)
-    st.success(f"Processed {len(chunks)} chunks.")
 
     st.write("You can now ask a question about the paper:")
     question = st.chat_input("Ask your question")
@@ -147,7 +148,3 @@ if uploaded_pdf:
 
         st.markdown("### 💬 Answer")
         st.write(answer)
-
-        with st.expander("🔎 Show retrieved context"):
-            for i, chunk in enumerate(retrieved, 1):
-                st.markdown(f"**Chunk {i}**: {chunk[:300]}...")
