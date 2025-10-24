@@ -72,16 +72,32 @@ if not HF_TOKEN:
 API_URL = 'https://router.huggingface.co/v1/chat/completions'
 
 def query_hf_llm(prompt, max_tokens=300):
-    headers = { 'Authorization': f'Bearer {HF_TOKEN}' }
+    headers = {'Authorization': f'Bearer {HF_TOKEN}'}
     payload = {
-        'messages': [ { 'role': 'user', 'content': prompt } ],
         'model': 'Qwen/Qwen3-1.7B:featherless-ai',
-        'parameters': { 'max_new_tokens': max_tokens, 'temperature': 0.3 }
+        'messages': [
+            {
+                'role': 'system',
+                'content': 'Disable thinking mode. Do not output <think> blocks. Give a direct, concise answer only based on the context provided.'
+            },
+            {
+                'role': 'user',
+                'content': prompt
+            }
+        ],
+        'parameters': {
+            'max_new_tokens': max_tokens,
+            'temperature': 0.7,  # recommended for non-thinking mode
+            'top_p': 0.8,
+            'top_k': 20
+        }
     }
+
     resp = requests.post(API_URL, headers=headers, json=payload)
-    resp.raise_for_status()  # raise an exception for HTTP errors
+    resp.raise_for_status()
     data = resp.json()
     return data['choices'][0]['message']['content']
+
 
 def build_prompt(question, retrieved_chunks):
     context = "\n\n".join(retrieved_chunks)
